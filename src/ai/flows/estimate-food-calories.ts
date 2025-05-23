@@ -42,7 +42,7 @@ const prompt = ai.definePrompt({
 
 Image: {{media url=photoDataUri}}
 
-Return a JSON object containing a list of food items and their estimated calorie counts.  Make sure that it conforms to the schema {{{{outputSchema}}}}.  Pay careful attention to datatypes for each field.  estimatedCalories MUST be a number. Do not include units.
+Return a JSON object containing a list of food items and their estimated calorie counts. Pay careful attention to datatypes for each field. 'estimatedCalories' MUST be a number. Do not include units.
 `,
 });
 
@@ -57,3 +57,4 @@ const estimateFoodCaloriesFlow = ai.defineFlow(
     return output!;
   }
 );
+
