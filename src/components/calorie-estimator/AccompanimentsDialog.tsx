@@ -28,7 +28,7 @@ export function AccompanimentsDialog({ foodItem, isOpen, onOpenChange }: Accompa
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-card">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-foreground">
             {foodItem.name} - Details
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -37,19 +37,19 @@ export function AccompanimentsDialog({ foodItem, isOpen, onOpenChange }: Accompa
         </DialogHeader>
         
         <div className="py-4">
-          <h3 className="text-lg font-medium mb-2 text-foreground">Suggested Accompaniments:</h3>
+          <h3 className="text-base sm:text-lg font-medium mb-2 text-foreground">Suggested Accompaniments:</h3>
           {foodItem.isLoadingAccompaniments ? (
             <div className="flex items-center justify-center h-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="ml-2 text-muted-foreground">Loading accompaniments...</p>
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary" />
+              <p className="ml-2 text-sm text-muted-foreground">Loading accompaniments...</p>
             </div>
           ) : foodItem.errorAccompaniments ? (
-             <p className="text-destructive">{foodItem.errorAccompaniments}</p>
+             <p className="text-destructive text-sm">{foodItem.errorAccompaniments}</p>
           ) : (foodItem.accompaniments && foodItem.accompaniments.length > 0) ? (
-            <ScrollArea className="h-40 rounded-md border border-border p-3">
+            <ScrollArea className="h-32 sm:h-40 rounded-md border border-border p-3">
               <ul className="space-y-1">
                 {foodItem.accompaniments.map((acc, index) => (
-                  <li key={index} className="text-sm text-foreground p-1 bg-background rounded-md">
+                  <li key={index} className="text-xs sm:text-sm text-foreground p-1 bg-background rounded-md">
                     {acc}
                   </li>
                 ))}
@@ -62,8 +62,8 @@ export function AccompanimentsDialog({ foodItem, isOpen, onOpenChange }: Accompa
 
         {foodItem.info && (
             <div className="py-4 border-t border-border">
-                <h3 className="text-lg font-medium mb-2 text-foreground">Additional Information:</h3>
-                <p className="text-sm text-muted-foreground">{foodItem.info}</p>
+                <h3 className="text-base sm:text-lg font-medium mb-2 text-foreground">Additional Information:</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">{foodItem.info}</p>
             </div>
         )}
 

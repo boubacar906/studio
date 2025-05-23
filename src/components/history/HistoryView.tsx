@@ -24,7 +24,7 @@ export function HistoryView() {
   if (isHistoryLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-primary mb-4" />
         <p>Loading history...</p>
       </div>
     );
@@ -33,8 +33,8 @@ export function HistoryView() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <h1 className="text-3xl font-bold text-primary flex items-center">
-          <HistoryIcon className="mr-3 h-8 w-8 text-accent" />
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary flex items-center">
+          <HistoryIcon className="mr-2 sm:mr-3 h-7 w-7 sm:h-8 sm:w-8 text-accent" />
           Estimation History
         </h1>
         {history.length > 0 && (
@@ -64,13 +64,13 @@ export function HistoryView() {
 
       {history.length === 0 ? (
         <div className="text-center py-10 px-4 bg-card rounded-lg shadow">
-          <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-xl font-medium text-foreground">No history yet.</p>
-          <p className="text-muted-foreground">Start estimating calories from your food images, and your history will appear here.</p>
+          <Info className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+          <p className="text-lg sm:text-xl font-medium text-foreground">No history yet.</p>
+          <p className="text-muted-foreground text-sm sm:text-base">Start estimating calories from your food images, and your history will appear here.</p>
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-20rem)] pr-3"> {/* Adjust height as needed */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+        <ScrollArea className="h-[calc(100vh-22rem)] sm:h-[calc(100vh-20rem)] pr-3"> {/* Adjust height as needed */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-4">
             {history.map((entry) => (
               <HistoryItemCard key={entry.id} entry={entry} />
             ))}

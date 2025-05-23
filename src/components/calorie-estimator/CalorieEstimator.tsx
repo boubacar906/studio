@@ -120,8 +120,8 @@ export function CalorieEstimator() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-4 sm:p-6 md:p-8 rounded-lg shadow-xl bg-card">
-      <h1 className="text-3xl font-bold text-center text-primary mb-6">
-        <Sparkles className="inline-block mr-2 h-8 w-8 text-accent" />
+      <h1 className="text-2xl sm:text-3xl font-bold text-center text-primary mb-6">
+        <Sparkles className="inline-block mr-2 h-7 w-7 sm:h-8 sm:w-8 text-accent" />
         CalorieCam: Snap & Estimate
       </h1>
       

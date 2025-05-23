@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'CalorieCam - Estimate Food Calories',
   description: 'Upload a picture of your food and get an estimate of its calorie content.',
+  viewport: 'width=device-width, initial-scale=1',
 };
 
 export default function RootLayout({

@@ -24,9 +24,9 @@ export function ResultsDisplay({ foodItems, onViewDetails, totalCalories }: Resu
 
   return (
     <div className="space-y-6 mt-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-foreground">Identified Food Items</h2>
-        <div className="text-lg font-medium text-foreground">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4 p-3 bg-secondary/30 rounded-lg">
+        <h2 className="text-xl sm:text-2xl font-semibold text-foreground text-center sm:text-left">Identified Food Items</h2>
+        <div className="text-md sm:text-lg font-medium text-foreground text-center sm:text-right">
           Total Estimated Calories: <span className="font-bold text-primary">{totalCalories} kcal</span>
         </div>
       </div>
@@ -39,7 +39,7 @@ export function ResultsDisplay({ foodItems, onViewDetails, totalCalories }: Resu
           </AlertDescription>
         </Alert>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {foodItems.map((item) => (
           <FoodItemCard key={item.id} item={item} onViewDetails={onViewDetails} />
         ))}

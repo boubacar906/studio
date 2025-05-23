@@ -44,7 +44,7 @@ export function ImageUpload({ onImageSelected, currentImagePreviewUrl }: ImageUp
     <div className="w-full space-y-4">
       <Label htmlFor="food-image-upload" className="text-lg font-medium">Upload Food Image</Label>
       <div
-        className="relative w-full h-64 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors group bg-background"
+        className="relative w-full h-52 sm:h-60 md:h-64 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors group bg-background"
         onClick={() => fileInputRef.current?.click()}
       >
         {imagePreview ? (
@@ -52,7 +52,8 @@ export function ImageUpload({ onImageSelected, currentImagePreviewUrl }: ImageUp
             <Image
               src={imagePreview}
               alt="Food preview"
-              layout="fill"
+              fill // Changed from layout="fill" for Next 13+
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 50vw"
               objectFit="contain"
               className="rounded-lg p-2"
               data-ai-hint="food meal"
@@ -68,10 +69,10 @@ export function ImageUpload({ onImageSelected, currentImagePreviewUrl }: ImageUp
             </Button>
           </>
         ) : (
-          <div className="text-center text-muted-foreground">
-            <UploadCloud className="mx-auto h-12 w-12 mb-2" />
-            <p className="font-semibold">Click to upload or drag and drop</p>
-            <p className="text-xs">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+          <div className="text-center text-muted-foreground p-4">
+            <UploadCloud className="mx-auto h-10 w-10 sm:h-12 sm:w-12 mb-2" />
+            <p className="font-semibold text-sm sm:text-base group-hover:text-primary">Click to upload or drag and drop</p>
+            <p className="text-xs sm:text-sm">SVG, PNG, JPG or GIF</p>
           </div>
         )}
         <Input
