@@ -57,4 +57,3 @@ const estimateFoodCaloriesFlow = ai.defineFlow(
     return output!;
   }
 );
-

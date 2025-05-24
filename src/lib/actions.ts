@@ -3,6 +3,7 @@
 
 import { estimateFoodCalories, EstimateFoodCaloriesInput, EstimateFoodCaloriesOutput } from "@/ai/flows/estimate-food-calories";
 import { suggestFoodAccompaniments, SuggestFoodAccompanimentsInput, SuggestFoodAccompanimentsOutput } from "@/ai/flows/suggest-food-accompaniments";
+import { analyzeMealNutrients, AnalyzeMealNutrientsInput, AnalyzeMealNutrientsOutput } from "@/ai/flows/analyze-meal-nutrients";
 import type { RawEstimateFoodCaloriesOutput } from "@/lib/types";
 
 export async function getCalorieEstimationAction(
@@ -10,28 +11,22 @@ export async function getCalorieEstimationAction(
 ): Promise<EstimateFoodCaloriesOutput> {
   try {
     const input: EstimateFoodCaloriesInput = { photoDataUri };
-    // The AI flow might return a string that needs parsing, or already parsed JSON.
-    // Assuming the flow returns the correct structured output.
     const result = await estimateFoodCalories(input) as unknown as RawEstimateFoodCaloriesOutput;
     
-    // Validate and structure the output if necessary
-    // For now, assume 'result' is already in EstimateFoodCaloriesOutput format
-    // If not, you would parse/validate it here using Zod or manually.
-    // Example of simple validation:
     if (!result || !Array.isArray(result.foodItems)) {
-      throw new Error("Invalid response format from AI for calorie estimation.");
+      console.error("Invalid response format from AI for calorie estimation. Result:", result);
+      throw new Error("AI response for calorie estimation was not in the expected format.");
     }
     result.foodItems.forEach(item => {
       if (typeof item.name !== 'string' || typeof item.estimatedCalories !== 'number') {
-        throw new Error("Invalid food item format in AI response.");
+        console.error("Invalid food item format in AI response. Item:", item);
+        throw new Error("Invalid food item data received from AI.");
       }
     });
 
     return result as EstimateFoodCaloriesOutput;
   } catch (error) {
     console.error("Error in getCalorieEstimationAction:", error);
-    // It's better to throw a custom error or return an error object
-    // that the client can handle gracefully.
     if (error instanceof Error) {
       throw new Error(`Failed to estimate calories: ${error.message}`);
     }
@@ -46,7 +41,8 @@ export async function getFoodAccompanimentsAction(
     const input: SuggestFoodAccompanimentsInput = { foodItem: foodItemName };
     const result = await suggestFoodAccompaniments(input);
     if (!result || !Array.isArray(result.accompaniments)) {
-      throw new Error("Invalid response format from AI for food accompaniments.");
+       console.error("Invalid response format from AI for food accompaniments. Result:", result);
+      throw new Error("AI response for food accompaniments was not in the expected format.");
     }
     return result;
   } catch (error) {
@@ -56,4 +52,23 @@ export async function getFoodAccompanimentsAction(
     }
     throw new Error("An unknown error occurred while suggesting accompaniments.");
   }
+}
+
+export async function getNutrientAnalysisAction(
+  input: AnalyzeMealNutrientsInput
+): Promise<AnalyzeMealNutrientsOutput> {
+    try {
+        const result = await analyzeMealNutrients(input);
+        if (!result || typeof result.lackingNutrients === 'undefined') { // Check for a key field
+            console.error("Invalid response format from AI for nutrient analysis. Result:", result);
+            throw new Error("AI response for nutrient analysis was not in the expected format.");
+        }
+        return result;
+    } catch (error) {
+        console.error("Error in getNutrientAnalysisAction:", error);
+        if (error instanceof Error) {
+            throw new Error(`Nutrient analysis failed: ${error.message}`);
+        }
+        throw new Error("An unknown error occurred during nutrient analysis.");
+    }
 }
