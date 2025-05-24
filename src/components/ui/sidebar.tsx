@@ -5,7 +5,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
-import { useIsMobile } from "@/hooks/use-mobile"
+import { useIsMobile as useIsMobileHook } from "@/hooks/use-mobile" // Renamed import to avoid conflict
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,7 @@ type SidebarContext = {
   setOpen: (open: boolean) => void
   openMobile: boolean
   setOpenMobile: (open: boolean) => void
-  isMobile: boolean
+  isMobile: boolean // This will be the effective isMobile state for consumers
   toggleSidebar: () => void
 }
 
@@ -67,13 +67,12 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const isMobile = useIsMobile()
+    const { isMobile: isMobileFromHook, hasMounted } = useIsMobileHook();
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
+    
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -82,21 +81,40 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof window !== "undefined") {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
+    
+    // Determine effective isMobile state: false until mounted, then actual value.
+    // This ensures server and initial client render use 'false', preventing hydration mismatch.
+    const effectiveIsMobile = hasMounted ? isMobileFromHook : false;
 
-    // Helper to toggle the sidebar.
+    // Effect to read cookie for uncontrolled component state
+    React.useEffect(() => {
+      if (openProp === undefined && typeof window !== "undefined") { // Only for uncontrolled mode and on client
+        const cookieValue = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+          ?.split("=")[1];
+        if (cookieValue) {
+          const cookieIsOpen = cookieValue === "true";
+          if (_open !== cookieIsOpen) { // Only update if different from current _open
+             _setOpen(cookieIsOpen);
+          }
+        }
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [openProp]); // Effect for initial cookie read in uncontrolled mode
+
     const toggleSidebar = React.useCallback(() => {
-      return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
-    }, [isMobile, setOpen, setOpenMobile])
+      return effectiveIsMobile // Use effectiveIsMobile here
+        ? setOpenMobile((current) => !current)
+        : setOpen((current) => !current)
+    }, [effectiveIsMobile, setOpen, setOpenMobile])
 
-    // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
@@ -107,13 +125,12 @@ const SidebarProvider = React.forwardRef<
           toggleSidebar()
         }
       }
-
-      window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
+      if (typeof window !== "undefined") {
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+      }
     }, [toggleSidebar])
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
-    // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContext>(
@@ -121,12 +138,12 @@ const SidebarProvider = React.forwardRef<
         state,
         open,
         setOpen,
-        isMobile,
+        isMobile: effectiveIsMobile, // Provide the carefully determined isMobile state
         openMobile,
         setOpenMobile,
         toggleSidebar,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, effectiveIsMobile, openMobile, setOpenMobile, toggleSidebar]
     )
 
     return (
@@ -175,7 +192,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile } = useSidebar() // isMobile from context is now safe
 
     if (collapsible === "none") {
       return (
@@ -192,6 +209,8 @@ const Sidebar = React.forwardRef<
       )
     }
 
+    // isMobile is now false on SSR and first client render, then updates.
+    // This structure ensures that the server and initial client render match for the desktop path.
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -212,6 +231,7 @@ const Sidebar = React.forwardRef<
       )
     }
 
+    // Desktop sidebar rendering (consistent for SSR and initial client render)
     return (
       <div
         ref={ref}
@@ -571,11 +591,13 @@ const SidebarMenuButton = React.forwardRef<
       return button
     }
 
+    let tooltipContentProps: React.ComponentProps<typeof TooltipContent> = {};
     if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
+      tooltipContentProps.children = tooltip;
+    } else {
+      tooltipContentProps = tooltip;
     }
+    
 
     return (
       <Tooltip>
@@ -583,8 +605,12 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
+          // The hidden prop on TooltipContent itself controls its visibility.
+          // Radix TooltipContent is portalled, so its direct rendering state shouldn't affect button hydration itself.
+          // Visibility changes post-hydration are fine.
+          // Ensure that isMobile and state are stable during initial client render matching SSR.
+          hidden={state !== "collapsed" || isMobile} 
+          {...tooltipContentProps}
         />
       </Tooltip>
     )
