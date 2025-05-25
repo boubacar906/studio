@@ -8,7 +8,7 @@ import { NutrientAnalysisCard } from './NutrientAnalysisCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, CalendarDays, ListChecks, AlertTriangle, BarChart3, UploadCloud, Camera } from 'lucide-react'; // Added Camera
+import { Activity, CalendarDays, ListChecks, AlertTriangle, BarChart3, UploadCloud, Camera } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -52,6 +52,27 @@ export function DashboardClientContent() {
         </div>
       </section>
 
+      {/* Quick Estimate Section - Moved Here */}
+      <section>
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UploadCloud className="text-primary h-6 w-6" />
+              Quick Estimate
+            </CardTitle>
+            <CardDescription>Ready for your next meal? Upload an image to get started.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/estimate" passHref>
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Camera className="mr-2 h-4 w-4" />
+                Estimate New Meal
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </section>
+
       <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
         {/* Main content area for recent meals and nutrient analysis */}
         <div className="lg:col-span-2 space-y-6 md:space-y-8">
@@ -87,24 +108,6 @@ export function DashboardClientContent() {
 
         {/* Right sidebar like section */}
         <aside className="lg:col-span-1 space-y-6 md:space-y-8">
-           <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UploadCloud className="text-primary h-6 w-6" />
-                Quick Estimate
-              </CardTitle>
-              <CardDescription>Ready for your next meal? Upload an image to get started.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/estimate" passHref>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Camera className="mr-2 h-4 w-4" />
-                  Estimate New Meal
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-          
           <NutrientAnalysisCard recentMeals={recentMeals.map(m => ({name: m.foodItems.map(fi => fi.name).join(', '), estimatedCalories: m.totalCalories}))} />
 
           <Card className="shadow-lg">
