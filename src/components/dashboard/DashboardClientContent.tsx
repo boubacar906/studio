@@ -1,58 +1,74 @@
+
 // src/components/dashboard/DashboardClientContent.tsx
 "use client";
 
+import { useEffect } from 'react'; // Added useEffect
+import { useRouter } from 'next/navigation'; // Added useRouter
+import { useAuth } from '@/hooks/useAuth'; // Added useAuth
 import { useHistory } from '@/hooks/useHistory';
 import { HistoryItemCard } from '@/components/history/HistoryItemCard';
 import { StatCard } from './StatCard';
 import { NutrientAnalysisCard } from './NutrientAnalysisCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, CalendarDays, ListChecks, AlertTriangle, BarChart3, UploadCloud, Camera } from 'lucide-react';
+import { Activity, CalendarDays, ListChecks, BarChart3, UploadCloud, Camera, Loader2 } from 'lucide-react'; // Added Loader2
 import Link from 'next/link';
 import Image from 'next/image';
 
 export function DashboardClientContent() {
+  const { user, isLoading: authLoading } = useAuth(); // Get auth state
+  const router = useRouter();
   const { history, isHistoryLoading } = useHistory();
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login'); // Redirect to login if not authenticated and auth check is complete
+    }
+  }, [user, authLoading, router]);
+
   // Placeholder data - replace with actual calculations
-  const caloriesToday = history.length > 0 ? history[0].totalCalories : 0; // Simplistic: uses latest entry
-  const caloriesThisWeek = history.reduce((acc, curr) => acc + curr.totalCalories, 0) / 2; // Simplistic
-  const caloriesThisMonth = history.reduce((acc, curr) => acc + curr.totalCalories, 0); // Simplistic
+  const caloriesToday = history.length > 0 ? history[0].totalCalories : 0; 
+  const caloriesThisWeek = history.reduce((acc, curr) => acc + curr.totalCalories, 0) / 2; 
+  const caloriesThisMonth = history.reduce((acc, curr) => acc + curr.totalCalories, 0); 
 
-  const recentMeals = history.slice(0, 6); // Show up to 6 recent meals
+  const recentMeals = history.slice(0, 6);
 
+  if (authLoading || (!user && !authLoading)) { // Show loading spinner while auth state is resolving or if redirecting
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+  
+  // User is authenticated, render dashboard
   return (
     <div className="flex flex-col gap-6 md:gap-8">
-      {/* Top "Categories" like section */}
       <section>
         <h2 className="text-2xl font-semibold tracking-tight mb-4 text-foreground">Activity Overview</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <StatCard
             title="Calories Today"
             value={`${caloriesToday.toFixed(0)} kcal`}
-            // description="Based on your recent entries"
             icon={Activity}
             color="bg-primary/10 text-primary"
           />
           <StatCard
             title="Avg. Calories This Week"
             value={`${caloriesThisWeek.toFixed(0)} kcal`}
-            // description="Average daily intake"
             icon={CalendarDays}
              color="bg-secondary/10 text-secondary"
           />
           <StatCard
             title="Total Meals Logged"
             value={`${history.length} meals`}
-            // description="Keep up the great work!"
             icon={ListChecks}
             color="bg-accent/10 text-accent"
           />
         </div>
       </section>
 
-      {/* Quick Estimate Section - Moved Here */}
       <section>
         <Card className="shadow-lg">
           <CardHeader>
@@ -74,7 +90,6 @@ export function DashboardClientContent() {
       </section>
 
       <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
-        {/* Main content area for recent meals and nutrient analysis */}
         <div className="lg:col-span-2 space-y-6 md:space-y-8">
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -106,7 +121,6 @@ export function DashboardClientContent() {
           </section>
         </div>
 
-        {/* Right sidebar like section */}
         <aside className="lg:col-span-1 space-y-6 md:space-y-8">
           <NutrientAnalysisCard recentMeals={recentMeals.map(m => ({name: m.foodItems.map(fi => fi.name).join(', '), estimatedCalories: m.totalCalories}))} />
 

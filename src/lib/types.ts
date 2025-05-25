@@ -1,4 +1,8 @@
 
+import type { z } from 'zod';
+import type { loginSchema, signupSchema } from '@/lib/schemas';
+
+
 export interface EstimatedFoodItemAi {
   name: string;
   estimatedCalories: number;
@@ -24,3 +28,7 @@ export interface HistoryEntry {
   foodItems: Pick<FoodItem, 'name' | 'estimatedCalories'>[];
   totalCalories: number;
 }
+
+// Auth Form Data Types
+export type LoginFormData = z.infer<typeof loginSchema>;
+export type SignupFormData = z.infer<typeof signupSchema>;

@@ -1,18 +1,17 @@
+
 // src/components/layout/SidebarNav.tsx
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
 import {
-  Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSeparator,
-} from '@/components/ui/sidebar';
+} from '@/components/ui/sidebar'; // Removed Sidebar component itself to avoid re-nesting
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,28 +21,64 @@ import {
   History,
   Settings,
   LogOut,
+  LogIn, // Added LogIn icon
+  UserPlus, // Added UserPlus icon
   Utensils,
   Sparkles,
   HelpCircle,
-  CloudUpload,
+  Loader2, // Added Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth'; // Import useAuth
 
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/estimate', label: 'Estimate Calories', icon: Camera },
-  { href: '/history', label: 'Meal History', icon: History },
-  { href: '/nutrient-analysis', label: 'Nutrient Analysis', icon: Sparkles, beta: true },
+// Minimal Card components for the Upgrade section to avoid import cycle / keep it simple
+const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("rounded-lg border shadow-sm", className)} {...props} />
+);
+const CardHeaderCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( // Renamed to avoid conflict
+  <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+);
+const CardTitleCard = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => ( // Renamed
+  <h3 className={cn("font-semibold leading-none tracking-tight", className)} {...props} />
+);
+const CardDescriptionCard = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => ( // Renamed
+  <p className={cn("text-sm text-muted-foreground", className)} {...props} />
+);
+const CardContentCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( // Renamed
+  <div className={cn("p-6 pt-0", className)} {...props} />
+);
+
+
+const mainNavItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, authRequired: true },
+  { href: '/estimate', label: 'Estimate Calories', icon: Camera, authRequired: true },
+  { href: '/history', label: 'Meal History', icon: History, authRequired: true },
+  { href: '/nutrient-analysis', label: 'Nutrient Analysis', icon: Sparkles, beta: true, authRequired: true },
 ];
 
-const bottomNavItems = [
-  { href: '#', label: 'Settings', icon: Settings }, // Placeholder
-  { href: '#', label: 'Help & Support', icon: HelpCircle }, // Placeholder
-  { href: '#', label: 'Log Out', icon: LogOut }, // Placeholder
+const unauthNavItems = [
+    { href: '/login', label: 'Login', icon: LogIn, authRequired: false },
+    { href: '/signup', label: 'Sign Up', icon: UserPlus, authRequired: false },
 ];
+
+const bottomPlaceholderNavItems = [
+  { href: '#', label: 'Settings', icon: Settings, authRequired: true }, 
+  { href: '#', label: 'Help & Support', icon: HelpCircle, authRequired: true },
+];
+
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut, isLoading: authIsLoading } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login'); // Redirect to login after sign out
+  };
+
+  const displayedNavItems = user ? mainNavItems : [];
+  const displayedBottomNavItems = user ? bottomPlaceholderNavItems : unauthNavItems;
 
   return (
     <>
@@ -55,19 +90,49 @@ export function SidebarNav() {
           </Link>
         </div>
         <div className="mt-4 flex flex-col items-start gap-2">
-            <Avatar className="h-12 w-12 border-2 border-sidebar-accent">
-                <AvatarImage src="https://placehold.co/80x80.png" alt="User Name" data-ai-hint="person avatar" />
-                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">UN</AvatarFallback>
-            </Avatar>
-            <div>
-                <p className="text-sm font-medium text-sidebar-foreground">User Name</p>
-                <p className="text-xs text-sidebar-foreground/70">user@example.com</p>
-            </div>
+            {authIsLoading ? (
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-12 w-12 border-2 border-sidebar-accent">
+                            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="text-sm font-medium text-sidebar-foreground/50">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            ) : user ? (
+                <>
+                    <Avatar className="h-12 w-12 border-2 border-sidebar-accent">
+                        {/* Placeholder for user image - replace with user.photoURL if available */}
+                        <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png?text=U"} alt={user.displayName || user.email || "User"} data-ai-hint="person avatar" />
+                        <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
+                            {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="text-sm font-medium text-sidebar-foreground truncate max-w-[150px]">{user.displayName || user.email?.split('@')[0] || "User"}</p>
+                        <p className="text-xs text-sidebar-foreground/70 truncate max-w-[150px]">{user.email}</p>
+                    </div>
+                </>
+            ) : (
+                 <>
+                    <Avatar className="h-12 w-12 border-2 border-sidebar-accent">
+                        <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">?</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="text-sm font-medium text-sidebar-foreground">Guest</p>
+                         <p className="text-xs text-sidebar-foreground/70">Please log in</p>
+                    </div>
+                 </>
+            )}
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2 flex-grow">
         <SidebarMenu>
-          {navItems.map((item) => (
+          {displayedNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
@@ -92,26 +157,34 @@ export function SidebarNav() {
           ))}
         </SidebarMenu>
         
-        <div className="mt-auto p-2 group-data-[collapsible=icon]:hidden">
-          <Card className="bg-sidebar-accent/10 border-sidebar-accent/30">
-            <CardHeader className="p-2 pt-0 md:p-4">
-              <CardTitle className="text-sm text-sidebar-foreground">Upgrade to Pro</CardTitle>
-              <CardDescription className="text-xs text-sidebar-foreground/70">
-                Unlock more features and get unlimited access to our support team.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-              <Button size="sm" className="w-full bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
-                Upgrade
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {!user && !authIsLoading && (
+             <div className="mt-auto p-2 group-data-[collapsible=icon]:hidden">
+                {/* Content for unauthenticated users, e.g., prompt to login/signup */}
+            </div>
+        )}
+        
+        {user && (
+            <div className="mt-auto p-2 group-data-[collapsible=icon]:hidden">
+            <Card className="bg-sidebar-accent/10 border-sidebar-accent/30">
+                <CardHeaderCard className="p-2 pt-0 md:p-4">
+                <CardTitleCard className="text-sm text-sidebar-foreground">Upgrade to Pro</CardTitleCard>
+                <CardDescriptionCard className="text-xs text-sidebar-foreground/70">
+                    Unlock more features and get unlimited access to our support team.
+                </CardDescriptionCard>
+                </CardHeaderCard>
+                <CardContentCard className="p-2 pt-0 md:p-4 md:pt-0">
+                <Button size="sm" className="w-full bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
+                    Upgrade
+                </Button>
+                </CardContentCard>
+            </Card>
+            </div>
+        )}
 
       </SidebarContent>
       <SidebarFooter className="p-2 border-t border-sidebar-border">
         <SidebarMenu>
-          {bottomNavItems.map((item) => (
+          {displayedBottomNavItems.map((item) => (
             <SidebarMenuItem key={item.label}>
                <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
@@ -127,26 +200,33 @@ export function SidebarNav() {
               </Link>
             </SidebarMenuItem>
           ))}
+          {user && !authIsLoading && (
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleSignOut}
+                  tooltip="Log Out"
+                  className="justify-start hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full"
+                  disabled={authIsLoading}
+                >
+                  {authIsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+                  <span className="group-data-[collapsible=icon]:hidden">Log Out</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+          {authIsLoading && (
+             <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Loading..."
+                  className="justify-start w-full"
+                  disabled={true}
+                >
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
     </>
   );
 }
-
-// Minimal Card components for the Upgrade section to avoid import cycle / keep it simple
-// In a real app, these would be from ui/card
-const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("rounded-lg border shadow-sm", className)} {...props} />
-);
-const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
-);
-const CardTitle = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h3 className={cn("font-semibold leading-none tracking-tight", className)} {...props} />
-);
-const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
-  <p className={cn("text-sm text-muted-foreground", className)} {...props} />
-);
-const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("p-6 pt-0", className)} {...props} />
-);
