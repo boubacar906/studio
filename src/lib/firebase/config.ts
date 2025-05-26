@@ -15,6 +15,19 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Log a warning if the API key appears to be a placeholder
+if (firebaseConfig.apiKey === "YOUR_API_KEY" || !firebaseConfig.apiKey) {
+  console.warn(
+    `%cWARNING: Firebase API Key is not configured or is still a placeholder!`,
+    "color: orange; font-weight: bold; font-size: 14px;"
+  );
+  console.warn(
+    `%cPlease ensure you have set NEXT_PUBLIC_FIREBASE_API_KEY in your .env file with a valid key from your Firebase project.`,
+    "color: orange; font-size: 12px;"
+  );
+}
+
+
 let app: FirebaseApp;
 let auth: Auth;
 // let firestore: Firestore; // Example
