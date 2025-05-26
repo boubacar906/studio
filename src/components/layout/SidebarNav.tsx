@@ -3,7 +3,7 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
+import { usePathname, useRouter } from 'next/navigation'; 
 import {
   SidebarContent,
   SidebarHeader,
@@ -11,7 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar'; // Removed Sidebar component itself to avoid re-nesting
+} from '@/components/ui/sidebar'; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,36 +21,37 @@ import {
   History,
   Settings,
   LogOut,
-  LogIn, // Added LogIn icon
-  UserPlus, // Added UserPlus icon
+  LogIn, 
+  UserPlus, 
   Utensils,
   Sparkles,
   HelpCircle,
-  Loader2, // Added Loader2
+  Loader2, 
+  Home, // Added Home icon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth'; // Import useAuth
+import { useAuth } from '@/hooks/useAuth'; 
 
-// Minimal Card components for the Upgrade section to avoid import cycle / keep it simple
+// Minimal Card components for the Upgrade section
 const Card = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("rounded-lg border shadow-sm", className)} {...props} />
 );
-const CardHeaderCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( // Renamed to avoid conflict
+const CardHeaderCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( 
   <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
 );
-const CardTitleCard = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => ( // Renamed
+const CardTitleCard = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => ( 
   <h3 className={cn("font-semibold leading-none tracking-tight", className)} {...props} />
 );
-const CardDescriptionCard = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => ( // Renamed
+const CardDescriptionCard = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => ( 
   <p className={cn("text-sm text-muted-foreground", className)} {...props} />
 );
-const CardContentCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( // Renamed
+const CardContentCard = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => ( 
   <div className={cn("p-6 pt-0", className)} {...props} />
 );
 
 
 const mainNavItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, authRequired: true },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, authRequired: true }, // Updated href
   { href: '/estimate', label: 'Estimate Calories', icon: Camera, authRequired: true },
   { href: '/history', label: 'Meal History', icon: History, authRequired: true },
   { href: '/nutrient-analysis', label: 'Nutrient Analysis', icon: Sparkles, beta: true, authRequired: true },
@@ -74,11 +75,27 @@ export function SidebarNav() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login'); // Redirect to login after sign out
+    router.push('/login'); 
   };
 
-  const displayedNavItems = user ? mainNavItems : [];
+  // Determine which nav items to display based on auth state
+  // Add "Home" for unauthenticated users or if not on landing page
+  let displayedNavItems = [];
+  if (user) {
+    displayedNavItems = mainNavItems;
+  } else {
+    // For unauthenticated users, show a Home link to the landing page
+     displayedNavItems.push({ href: '/', label: 'Home', icon: Home, authRequired: false });
+  }
+  
   const displayedBottomNavItems = user ? bottomPlaceholderNavItems : unauthNavItems;
+
+  // Hide sidebar completely on the landing page for non-authenticated users
+  // This is a simple way; more complex scenarios might use route groups or layout HOCs
+  if (pathname === '/' && !user && !authIsLoading) {
+    return null; // Don't render sidebar content on landing page for guests
+  }
+
 
   return (
     <>
@@ -106,7 +123,6 @@ export function SidebarNav() {
             ) : user ? (
                 <>
                     <Avatar className="h-12 w-12 border-2 border-sidebar-accent">
-                        {/* Placeholder for user image - replace with user.photoURL if available */}
                         <AvatarImage src={user.photoURL || "https://placehold.co/80x80.png?text=U"} alt={user.displayName || user.email || "User"} data-ai-hint="person avatar" />
                         <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
                             {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
@@ -124,7 +140,7 @@ export function SidebarNav() {
                     </Avatar>
                     <div>
                         <p className="text-sm font-medium text-sidebar-foreground">Guest</p>
-                         <p className="text-xs text-sidebar-foreground/70">Please log in</p>
+                         <p className="text-xs text-sidebar-foreground/70">Welcome!</p>
                     </div>
                  </>
             )}
@@ -132,7 +148,12 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent className="p-2 flex-grow">
         <SidebarMenu>
-          {displayedNavItems.map((item) => (
+          {displayedNavItems.map((item) => {
+            // Skip authRequired items if no user, unless item.authRequired is false
+            if (item.authRequired && !user) return null;
+            if (!item.authRequired && user && (item.href === '/login' || item.href === '/signup')) return null; // Hide login/signup if logged in
+
+            return (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
@@ -154,14 +175,9 @@ export function SidebarNav() {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
-          ))}
+            );
+        })}
         </SidebarMenu>
-        
-        {!user && !authIsLoading && (
-             <div className="mt-auto p-2 group-data-[collapsible=icon]:hidden">
-                {/* Content for unauthenticated users, e.g., prompt to login/signup */}
-            </div>
-        )}
         
         {user && (
             <div className="mt-auto p-2 group-data-[collapsible=icon]:hidden">
@@ -184,7 +200,10 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarFooter className="p-2 border-t border-sidebar-border">
         <SidebarMenu>
-          {displayedBottomNavItems.map((item) => (
+          {displayedBottomNavItems.map((item) => {
+             if (item.authRequired && !user) return null;
+             if (!item.authRequired && user && (item.href === '/login' || item.href === '/signup')) return null;
+            return (
             <SidebarMenuItem key={item.label}>
                <Link href={item.href} legacyBehavior passHref>
                 <SidebarMenuButton
@@ -199,7 +218,8 @@ export function SidebarNav() {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
-          ))}
+            );
+        })}
           {user && !authIsLoading && (
             <SidebarMenuItem>
                 <SidebarMenuButton
