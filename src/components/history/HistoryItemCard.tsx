@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { HistoryEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, FileText } from 'lucide-react';
+import { CalendarDays, FileText, ImageOff } from 'lucide-react'; // Added ImageOff
 
 interface HistoryItemCardProps {
   entry: HistoryEntry;
@@ -14,26 +14,33 @@ interface HistoryItemCardProps {
 export function HistoryItemCard({ entry }: HistoryItemCardProps) {
   const entryDate = new Date(entry.date);
   
-  // Fallback image if entry.uploadedImage is invalid
-  const imageSrc = entry.uploadedImage || "https://placehold.co/300x200.png";
-
+  // Use a placeholder if the image is marked as "placeholder" (not stored) or is actually missing
+  const imageSrc = entry.uploadedImage && entry.uploadedImage !== "placeholder" ? entry.uploadedImage : "https://placehold.co/300x200.png?text=No+Image";
+  const showActualImage = entry.uploadedImage && entry.uploadedImage !== "placeholder";
 
   return (
     <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-background">
       <CardHeader className="pb-3">
-        <div className="relative w-full h-40 sm:h-48 mb-2 rounded-md overflow-hidden">
-            <Image 
-                src={imageSrc} 
-                alt="Uploaded food" 
-                fill // Changed from layout="fill"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                objectFit="cover"
-                data-ai-hint="food meal"
-                onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/300x200.png"; }}
-            />
+        <div className="relative w-full h-40 sm:h-48 mb-2 rounded-md overflow-hidden bg-muted/30 flex items-center justify-center">
+            {showActualImage ? (
+                <Image 
+                    src={imageSrc} 
+                    alt="Uploaded food" 
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    objectFit="cover"
+                    data-ai-hint="food meal"
+                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/300x200.png?text=Error"; }}
+                />
+            ) : (
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <ImageOff className="w-12 h-12 mb-2" />
+                    <span className="text-xs">Image not stored</span>
+                </div>
+            )}
         </div>
         <CardTitle className="text-lg sm:text-xl font-semibold text-foreground">
-          Estimation Result
+          Estimation - {entry.foodItems.length > 0 ? entry.foodItems[0].name.substring(0,20) + (entry.foodItems[0].name.length > 20 ? "..." : "") : "Details"}
         </CardTitle>
         <CardDescription className="flex items-center text-xs sm:text-sm text-muted-foreground">
           <CalendarDays className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" /> {entryDate.toLocaleDateString()} - {entryDate.toLocaleTimeString()}

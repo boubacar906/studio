@@ -24,7 +24,7 @@ export interface FoodItem {
 export interface HistoryEntry {
   id: string;
   date: string; // ISO date string
-  uploadedImage: string; // Data URI of the full uploaded image
+  uploadedImage: string; // Data URI of the full uploaded image, or "placeholder" if not stored
   foodItems: Pick<FoodItem, 'name' | 'estimatedCalories'>[];
   totalCalories: number;
 }
