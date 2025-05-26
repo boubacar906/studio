@@ -1,4 +1,3 @@
-
 // src/app/login/page.tsx
 "use client";
 
@@ -19,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+// Label import removed as it's not used directly, FormLabel handles it.
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, LogIn, AlertCircle, Utensils } from 'lucide-react';
@@ -80,6 +79,10 @@ export default function LoginPage() {
           <Utensils className="mx-auto h-10 w-10 text-primary mb-2" />
           <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
           <CardDescription>Log in to continue to CalorieCam</CardDescription>
+          <p className="text-xs text-muted-foreground pt-2">
+            Tip: For testing, you can create an account like admin@example.com / password123 
+            via the <Link href="/signup" className="underline font-medium text-primary hover:text-primary/80">signup page</Link> or Firebase console.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
